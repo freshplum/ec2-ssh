@@ -6,7 +6,7 @@ import getopt
 
 from sys import stderr
 
-import boto
+import boto.ec2
 
 
 _ec2 = None
@@ -62,8 +62,8 @@ def ec2_instances(**kwargs):
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "hLk:s:",
-                                         ["help", "aws-key", "aws-secret"])
+        opts, args = getopt.getopt(argv, "hLk:s:r:",
+                                         ["help", "aws-key", "aws-secret", "region"])
     except getopt.GetoptError, err:
         print >>sys.stderr, err
         short_usage()
@@ -71,6 +71,7 @@ def main(argv):
 
     aws_key = os.environ.get("AWS_ACCESS_KEY_ID")
     aws_secret = os.environ.get("AWS_SECRET_ACCESS_KEY")
+    region = None
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
@@ -80,6 +81,8 @@ def main(argv):
             aws_key = arg
         elif opt in("-s", "--aws-secret"):
             aws_secret = arg
+        elif opt in("-r", "--region"):
+            region = arg
 
     if not aws_key or not aws_secret:
         if not aws_key:
@@ -95,8 +98,10 @@ def main(argv):
         short_usage()
         sys.exit(2)
 
+    region = region and boto.ec2.get_region(region, aws_access_key_id=aws_key, aws_secret_access_key=aws_secret)
+
     global _ec2
-    _ec2 = boto.connect_ec2(aws_key, aws_secret)
+    _ec2 = boto.ec2.connection.EC2Connection(aws_key, aws_secret, region=region)
 
     argc = len(args)
     if argc == 0:
