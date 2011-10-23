@@ -1,16 +1,34 @@
-#!/bin/sh
-#/ Usage: ec2-ssh <instance-name>
-#/ Open ssh connection to EC2 instance where tag:Name=<instance-name>
-#/ For list of instance, run ec2-host without any paramteres
+#!/bin/bash
 
-set -e
+set -e 
 
-test $# -eq 0 -o $(expr "$*" : ".*--help") \
-				-ne 0 -o $(expr "$*" : ".*-h") -ne 0 && {
-    grep ^#/ < $0 |
-    cut -c4-
-    exit
+usage() {
+    cat<<EOF
+Usage: ec2-ssh [-k KEY] [-s SECRET] [-r REGION] <instance-name>
+
+Open an ssh connection to an EC2 instance where tag:Name=<instance-name>
+For list of instance, run ec2-host without any paramteres
+
+-k, KEY       Amazon EC2 Key, defaults to \$AWS_ACCESS_KEY_ID
+-s, SECRET    Amazon EC2 Secret, defaults to \$AWS_SECRET_ACCESS_KEY
+EOF
 }
+
+# Print usage message and exit if no arguments are given
+test $# -eq 0 && { usage; exit; }
+
+# Process options
+cmd="ec2-host"
+while getopts ":hk:s:r:" opt; do
+    case $opt in
+        h  ) usage; exit 1;;
+        k  ) cmd="$cmd -k$OPTARG";;
+        s  ) cmd="$cmd -s$OPTARG";;
+        r  ) cmd="$cmd -r$OPTARG";;
+        \? ) usage; exit 1
+    esac
+done
+shift $((OPTIND - 1))
 
 # support user@instance-name format
 IFS="@"; declare -a hostparts=($1) 
@@ -18,13 +36,13 @@ IFS="@"; declare -a hostparts=($1)
 inst="${hostparts[1]}"
 user="${hostparts[0]}"
 
-if test -z "$inst"; then
-	inst="$1"
-	user="ubuntu"
+if [ -z "$inst" ]; then
+  inst="$1"
+  user="ubuntu"
 fi
 
 # get host from ec2-host command
-host=$(ec2-host $inst)
+host=$(exec sh -c "$cmd $inst")
 
 # pass all other parameters (${@:2}) to ssh allowing
 # things like: ec2-ssh nginx uptime
