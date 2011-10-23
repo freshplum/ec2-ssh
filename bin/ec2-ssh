@@ -9,8 +9,10 @@ Usage: ec2-ssh [-k KEY] [-s SECRET] [-r REGION] <instance-name>
 Open an ssh connection to an EC2 instance where tag:Name=<instance-name>
 For list of instance, run ec2-host without any paramteres
 
--k, KEY       Amazon EC2 Key, defaults to \$AWS_ACCESS_KEY_ID
--s, SECRET    Amazon EC2 Secret, defaults to \$AWS_SECRET_ACCESS_KEY
+  -h            display this help and exit
+  -k, KEY       Amazon EC2 Key, defaults to \$AWS_ACCESS_KEY_ID
+  -s, SECRET    Amazon EC2 Secret, defaults to \$AWS_SECRET_ACCESS_KEY
+  -r, REGION    Amazon EC2 Region, defaults to us-east-1
 EOF
 }
 
